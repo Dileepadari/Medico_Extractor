@@ -1,13 +1,16 @@
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from PyPDF2 import PdfReader
 import os
+from PyPDF2 import PdfReader
 from pdf2image import convert_from_bytes
 import pytesseract
 import io
+from pathlib import Path
 
 # Initialize FastAPI
 app = FastAPI()
@@ -15,10 +18,27 @@ app = FastAPI()
 # Allow frontend to talk to backend
 app.add_middleware(
     CORSMiddleware, 
-    allow_origins=["http://127.0.0.1:5500", "http://localhost:5500"], 
+    allow_origins=["*"], 
     allow_methods=["*"], 
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
+
+# Serve static files (optional folder: ./static)
+static_dir = Path(__file__).resolve().parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
+
+@app.get("/", include_in_schema=False)
+async def serve_index():
+    # Try project root index.html first, then static/index.html
+    root_index = Path(__file__).resolve().parent / "index.html"
+    static_index = static_dir / "index.html"
+    if root_index.exists():
+        return FileResponse(str(root_index))
+    if static_index.exists():
+        return FileResponse(str(static_index))
+    raise HTTPException(status_code=404, detail="index.html not found. Place index.html in project root or ./static/")
+
 
 # 1. DEFINE NESTED STRUCTURED DATA FORMAT (Pydantic)
 class PatientDemographics(BaseModel):
@@ -54,6 +74,8 @@ class ExtractedReferralData(BaseModel):
     referral_received_date: ReferralReceivedDate
 
 # 2. SETUP THE LLM
+from dotenv  import load_dotenv 
+load_dotenv()
 api_key = os.environ.get("GOOGLE_API_KEY", "__dummy__") 
 
 llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0, google_api_key=api_key)
@@ -87,9 +109,7 @@ async def extract_data(file: UploadFile = File(...)):
             except Exception as e:
                 print(f"OCR Failed: {str(e)}")
                 raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
-                
-Medico_Extractor
-Public
+
             if not text.strip():
                 raise HTTPException(
                     status_code=400, 
