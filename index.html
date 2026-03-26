@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Health - Doc Extractor</title>
+    <style>
+        :root {
+            --primary-bg: #f9fafb;
+            --card-bg: #ffffff;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --text-empty: #9ca3af;
+            --accent-green: #20c997;
+            --border-color: #e5e7eb;
+            --btn-bg: #111827;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border-color);
+        }
+
+        h2 { margin: 0 0 4px 0; font-size: 24px; font-weight: 700; }
+        .subtitle { color: var(--text-muted); font-size: 14px; margin: 0 0 30px 0; }
+
+        /* Upload Zone */
+        .upload-zone {
+            border: 2px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            background-color: #fcfcfc;
+            transition: all 0.2s;
+            margin-bottom: 20px;
+        }
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--accent-green);
+            background-color: #f0fdf4;
+        }
+        .upload-icon {
+            background-color: #e6fcf5;
+            color: var(--accent-green);
+            width: 40px; height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+        }
+        .upload-zone h4 { margin: 0 0 8px 0; font-size: 16px; }
+        .upload-zone p { margin: 0; font-size: 13px; color: var(--text-muted); }
+        input[type="file"] { display: none; }
+
+        /* Button */
+        button {
+            width: 100%;
+            background-color: var(--btn-bg);
+            color: white;
+            border: none;
+            padding: 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: opacity 0.2s;
+        }
+        button:hover { opacity: 0.9; }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Loader */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: var(--accent-green);
+            font-weight: 500;
+        }
+
+        /* Results Section */
+        .results-container {
+            display: none;
+            margin-top: 40px;
+        }
+        .results-title {
+            color: var(--accent-green);
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            background: #fff;
+        }
+        .card.full-width { grid-column: span 2; }
+
+        .card-header {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--accent-green);
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .card-header::before {
+            content: '';
+            display: inline-block;
+            width: 3px;
+            height: 12px;
+            background-color: var(--accent-green);
+            margin-right: 8px;
+        }
+
+        .field-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .field-grid.four-cols { grid-template-columns: repeat(4, 1fr); }
+
+        .field-group { display: flex; flex-direction: column; }
+        .field-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+        }
+        .field-value {
+            font-size: 13px;
+            padding: 8px 12px;
+            background-color: #f3f4f6;
+            border-radius: 4px;
+            min-height: 18px;
+            color: var(--text-main);
+        }
+        .field-value.empty {
+            background-color: transparent;
+            border: 1px dashed var(--border-color);
+            color: var(--text-empty);
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h2>Referral Extractor</h2>
+        <p class="subtitle">Linear Health - Internal Tool</p>
+
+        <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <h4>Drop referral PDF here or click to browse</h4>
+            <p id="fileLabel">PDF files only</p>
+        </div>
+        <input type="file" id="fileInput" accept="application/pdf" onchange="updateFileLabel()" />
+        
+        <button id="extractBtn" onclick="uploadFile()">EXTRACT DATA</button>
+
+        <div id="loader" class="loader">Extracting via Gemini, please wait...</div>
+
+        <div id="resultsWrapper" class="results-container">
+            <div class="results-title">EXTRACTED RESULTS</div>
+            <div id="resultsGrid" class="grid-layout">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // File input UI update
+        function updateFileLabel() {
+            const input = document.getElementById('fileInput');
+            const label = document.getElementById('fileLabel');
+            if (input.files.length > 0) {
+                label.innerText = input.files[0].name;
+                label.style.color = 'var(--text-main)';
+            }
+        }
+
+        // Drag and Drop Logic
+        const dropZone = document.getElementById('dropZone');
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault(); dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                document.getElementById('fileInput').files = e.dataTransfer.files;
+                updateFileLabel();
+            }
+        });
+
+        // Schema defining the layout based on the mockup
+        const uiSchema = [
+            {
+                id: "patient_demographics",
+                title: "PATIENT DEMOGRAPHICS",
+                fullWidth: true,
+                fields: [
+                    { key: "name", label: "Name" },
+                    { key: "dob", label: "Date of Birth" },
+                    { key: "phone", label: "Phone" },
+                    { key: "email", label: "Email" }
+                ]
+            },
+            {
+                id: "primary_insurance",
+                title: "PRIMARY INSURANCE",
+                fullWidth: false,
+                fields: [
+                    { key: "member_id", label: "Member ID" },
+                    { key: "group_id", label: "Group ID" },
+                    { key: "insurance_name", label: "Insurance Name" },
+                    { key: "plan_name", label: "Plan Name" }
+                ]
+            },
+            {
+                id: "secondary_insurance",
+                title: "SECONDARY INSURANCE",
+                fullWidth: false,
+                fields: [
+                    { key: "member_id", label: "Member ID" },
+                    { key: "group_id", label: "Group ID" }
+                ]
+            },
+            {
+                id: "referral_source",
+                title: "REFERRAL SOURCE",
+                fullWidth: false,
+                fields: [
+                    { key: "provider_name", label: "Provider Name" },
+                    { key: "clinic_name", label: "Clinic Name" },
+                    { key: "title", label: "Title" },
+                    { key: "phone", label: "Phone" }
+                ]
+            },
+            {
+                id: "referral_received_date",
+                title: "REFERRAL RECEIVED DATE",
+                fullWidth: false,
+                fields: [
+                    { key: "date", label: "Date" }
+                ]
+            }
+        ];
+
+        async function uploadFile() {
+            const fileInput = document.getElementById("fileInput");
+            if (fileInput.files.length === 0) return alert("Please select a file");
+
+            const formData = new FormData();
+            formData.append("file", fileInput.files[0]);
+
+            // ADD THESE TWO LINES:
+            console.log("Browser File Size:", fileInput.files[0].size, "bytes");
+            console.log("FormData contains file?", formData.has("file"));
+
+            const loader = document.getElementById('loader');
+            const btn = document.getElementById('extractBtn');
+            const resultsWrapper = document.getElementById('resultsWrapper');
+            
+            loader.style.display = 'block';
+            resultsWrapper.style.display = 'none';
+            btn.disabled = true;
+
+            try {
+                const response = await fetch("http://localhost:8000/extract", {
+                    method: "POST",
+                    body: formData // Bug fix: was "FormData"
+                });
+                
+                if (!response.ok) throw new Error("Server Error");
+                
+                const data = await response.json(); // Bug fix: needed await
+                renderResults(data);
+
+            } catch (error) {
+                console.error("Extraction failed:", error);
+                alert("Extraction failed. Check the console for details.");
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        }
+
+        function renderResults(apiData) {
+            const grid = document.getElementById('resultsGrid');
+            grid.innerHTML = ''; // Clear previous results
+
+            // Loop through the schema to build the UI dynamically
+            uiSchema.forEach(section => {
+                const sectionData = apiData[section.id] || {};
+                
+                // Create Card container
+                const card = document.createElement('div');
+                card.className = `card ${section.fullWidth ? 'full-width' : ''}`;
+                
+                // Create Card Header
+                const header = document.createElement('div');
+                header.className = 'card-header';
+                header.innerText = section.title;
+                card.appendChild(header);
+
+                // Create Fields Grid
+                const fieldGrid = document.createElement('div');
+                fieldGrid.className = `field-grid ${section.fullWidth ? 'four-cols' : ''}`;
+
+                // Check if the whole section is missing data
+                let hasAnyData = false;
+
+                section.fields.forEach(field => {
+                    const value = sectionData[field.key];
+                    if (value && value !== "0" && value !== "Unknown" && value.trim() !== "") {
+                        hasAnyData = true;
+                    }
+
+                    const fieldGroup = document.createElement('div');
+                    fieldGroup.className = 'field-group';
+                    
+                    const label = document.createElement('div');
+                    label.className = 'field-label';
+                    label.innerText = field.label;
+
+                    const valDiv = document.createElement('div');
+                    
+                    if (value && value !== "0" && value !== "Unknown" && value.trim() !== "") {
+                        valDiv.className = 'field-value';
+                        valDiv.innerText = value;
+                    } else {
+                        valDiv.className = 'field-value empty';
+                        valDiv.innerText = 'Not found in document';
+                    }
+
+                    fieldGroup.appendChild(label);
+                    fieldGroup.appendChild(valDiv);
+                    fieldGrid.appendChild(fieldGroup);
+                });
+
+                // If no data exists for this whole block (like Tertiary Insurance in mockup)
+                if (!hasAnyData && !section.fullWidth && section.fields.length <= 2) {
+                    fieldGrid.innerHTML = `<div class="field-value empty" style="grid-column: span 2;">Not found in document</div>`;
+                }
+
+                card.appendChild(fieldGrid);
+                grid.appendChild(card);
+            });
+
+            document.getElementById('resultsWrapper').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
