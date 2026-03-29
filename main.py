@@ -4,14 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.messages import HumanMessage, SystemMessage
 import os
-from PyPDF2 import PdfReader
-import fitz  # PyMuPDF
-from PIL import Image
-import pytesseract
-import io
+import base64
 from pathlib import Path
+from dotenv import load_dotenv
 
 # Initialize FastAPI
 app = FastAPI()
@@ -75,7 +72,6 @@ class ExtractedReferralData(BaseModel):
     referral_received_date: ReferralReceivedDate
 
 # 2. SETUP THE LLM
-from dotenv  import load_dotenv 
 load_dotenv()
 api_key = os.environ.get("GOOGLE_API_KEY", "__dummy__") 
 
@@ -87,70 +83,52 @@ async def extract_data(file: UploadFile = File(...)):
     print(f"\n--- DEBUG: STARTING EXTRACTION FOR {file.filename} ---")
     
     try:
-        # 3. READ THE PDF AND EXTRACT TEXT
+        # 3. READ THE FILE
         file_bytes = await file.read()
         
-        # Try standard text extraction first (Fast)
-        print("Attempting standard text extraction...")
-        pdf_reader = PdfReader(io.BytesIO(file_bytes))
-        text = ""
-        for page in pdf_reader.pages:
-            page_text = page.extract_text()
-            if page_text:
-                text += page_text
+        # Determine the mime type so Gemini knows what kind of file it is looking at
+        mime_type = file.content_type
+        if not mime_type:
+            # Fallback based on extension
+            if file.filename.lower().endswith(".pdf"):
+                mime_type = "application/pdf"
+            else:
+                mime_type = "image/jpeg"
                 
-        # OCR FALLBACK (If standard extraction is empty)
-        if not text.strip():
-            print("Standard extraction failed (likely a scanned fax). Falling back to OCR...")
-            try:
-                # Convert PDF pages to images using PyMuPDF
-                doc = fitz.open(stream=file_bytes, filetype="pdf")
-
-                for page_index in range(len(doc)):
-                    print(f"Running OCR on page {page_index + 1}...")
-                    
-                    page = doc.load_page(page_index)
-                    pix = page.get_pixmap()
-                    
-                    img_bytes = pix.tobytes("png")
-                    image = Image.open(io.BytesIO(img_bytes))
-                    
-                    text += pytesseract.image_to_string(image)
-            except Exception as e:
-                print(f"OCR Failed: {str(e)}")
-                raise HTTPException(status_code=500, detail=f"OCR processing failed: {str(e)}")
-
-            if not text.strip():
-                raise HTTPException(
-                    status_code=400, 
-                    detail="Could not extract text via standard reading or OCR. The document may be blank."
-                )
-                
-        print(f"Extraction successful. Total characters: {len(text)}")
+        # 4. CONVERT TO BASE64
+        # Gemini expects file data encoded as a base64 string
+        encoded_file = base64.b64encode(file_bytes).decode("utf-8")
         
-        # 4. CREATE THE PROMPT
+        # 5. CREATE THE PROMPT
         system_instruction = (
             "You are an expert medical data extraction algorithm. "
-            "Extract the requested patient, insurance, and referral information from the text. "
+            "Extract the requested patient, insurance, and referral information from the provided document. "
             "Do not make up information or guess. If a specific piece of information is missing, "
             "return an empty string for that field."
         )
         
-        prompt = ChatPromptTemplate.from_messages([
-            ("system", system_instruction),
-            ("human", "{text}")
-        ])
+        # 6. CONSTRUCT MULTIMODAL MESSAGE
+        # We pass the text instructions and the raw file data in a single message payload
+        messages = [
+            SystemMessage(content=system_instruction),
+            HumanMessage(
+                content=[
+                    {"type": "text", "text": "Please extract the required data from this document."},
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": f"data:{mime_type};base64,{encoded_file}"}
+                    }
+                ]
+            )
+        ]
         
-        # 5. CHAIN AND EXECUTE
-        print("Sending text to Gemini...")
-        chain = prompt | structured_llm
-        result = chain.invoke({"text": text[:50000]}) 
+        # 7. EXECUTE
+        print("Sending document directly to Gemini (Multimodal)...")
+        result = structured_llm.invoke(messages)
         
         print("--- DEBUG: EXTRACTION COMPLETE ---")
         return result
         
-    except HTTPException:
-        raise # Re-raise HTTP exceptions so FastAPI handles them properly
     except Exception as e:
         print(f"CRITICAL ERROR: {str(e)}") 
         raise HTTPException(status_code=500, detail=str(e))
