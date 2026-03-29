@@ -7,7 +7,8 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 import os
 from PyPDF2 import PdfReader
-from pdf2image import convert_from_bytes
+import fitz  # PyMuPDF
+from PIL import Image
 import pytesseract
 import io
 from pathlib import Path
@@ -102,9 +103,18 @@ async def extract_data(file: UploadFile = File(...)):
         if not text.strip():
             print("Standard extraction failed (likely a scanned fax). Falling back to OCR...")
             try:
-                images = convert_from_bytes(file_bytes)
-                for i, image in enumerate(images):
-                    print(f"Running OCR on page {i + 1}...")
+                # Convert PDF pages to images using PyMuPDF
+                doc = fitz.open(stream=file_bytes, filetype="pdf")
+
+                for page_index in range(len(doc)):
+                    print(f"Running OCR on page {page_index + 1}...")
+                    
+                    page = doc.load_page(page_index)
+                    pix = page.get_pixmap()
+                    
+                    img_bytes = pix.tobytes("png")
+                    image = Image.open(io.BytesIO(img_bytes))
+                    
                     text += pytesseract.image_to_string(image)
             except Exception as e:
                 print(f"OCR Failed: {str(e)}")
