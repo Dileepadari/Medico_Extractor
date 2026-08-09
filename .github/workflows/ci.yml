@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.11", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check app tests api
+
+      - name: Test
+        # No GOOGLE_API_KEY on purpose: the suite must never reach the network.
+        run: pytest --cov=app --cov-report=term-missing
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build image
+        run: docker build -t medico-extractor:ci .
+
+      - name: Boot the container and check its health endpoint
+        run: |
+          docker run -d --name medico -p 8000:8000 -e GOOGLE_API_KEY=ci-placeholder medico-extractor:ci
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:8000/healthz > /dev/null; then
+              echo "healthy after ${i}s"
+              curl -fsS http://localhost:8000/readyz
+              docker rm -f medico
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "container never became healthy"
+          docker logs medico
+          exit 1

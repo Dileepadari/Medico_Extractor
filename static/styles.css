@@ -1,0 +1,516 @@
+/* Medico Extractor - UI styles.
+   Brand accent is sampled from the logo mark (#47266b). */
+
+:root {
+  color-scheme: light dark;
+
+  --brand-900: #2c1642;
+  --brand-700: #47266b;
+  --brand-500: #6d3fa0;
+  --brand-300: #a985d6;
+  --brand-100: #ede6f7;
+
+  --bg: #f6f4fa;
+  --surface: #ffffff;
+  --surface-muted: #f3f1f7;
+  --border: #e4e1ec;
+  --border-strong: #cfc9dd;
+
+  --text: #1b1524;
+  --text-muted: #635a75;
+  --text-faint: #948ca3;
+
+  --accent: var(--brand-700);
+  --accent-contrast: #ffffff;
+  --ok: #0f7a5a;
+  --danger: #b42318;
+  --danger-bg: #fef3f2;
+
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 1px 2px rgba(27, 21, 36, 0.04), 0 8px 24px rgba(27, 21, 36, 0.06);
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #100c17;
+    --surface: #191322;
+    --surface-muted: #211a2c;
+    --border: #2e2640;
+    --border-strong: #3d3352;
+
+    --text: #f1eef7;
+    --text-muted: #b3a9c4;
+    --text-faint: #7d7391;
+
+    --accent: var(--brand-300);
+    --accent-contrast: #1b1524;
+    --ok: #4ac79b;
+    --danger: #ff9a90;
+    --danger-bg: #2c1618;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0 20px 64px;
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.shell {
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+/* --- Header --------------------------------------------------------- */
+
+.masthead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 0 24px;
+}
+
+/* The brand mark is a single deep-purple colour. Rather than recolour it for
+   dark mode, it sits on a constant light chip so it reads the same everywhere. */
+.masthead__mark {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  background: #ffffff;
+  border: 1px solid var(--border);
+}
+
+.masthead__logo {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  display: block;
+}
+
+.masthead__text h1 {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.masthead__text p {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.masthead__spacer {
+  flex: 1;
+}
+
+.badge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-strong);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.badge[data-state="ready"] {
+  color: var(--ok);
+  border-color: color-mix(in srgb, var(--ok) 40%, transparent);
+}
+
+.badge[data-state="down"] {
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+/* --- Cards ---------------------------------------------------------- */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 28px;
+}
+
+.panel + .panel {
+  margin-top: 24px;
+}
+
+/* --- Dropzone ------------------------------------------------------- */
+
+.dropzone {
+  display: block;
+  width: 100%;
+  border: 1.5px dashed var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface-muted);
+  padding: 40px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+  font: inherit;
+  color: inherit;
+}
+
+.dropzone:hover,
+.dropzone:focus-visible,
+.dropzone.is-dragging {
+  border-color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface));
+  outline: none;
+}
+
+.dropzone__icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--accent);
+}
+
+.dropzone__title {
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.dropzone__hint {
+  display: block;
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.dropzone__hint strong {
+  color: var(--text);
+  font-weight: 600;
+  word-break: break-all;
+}
+
+input[type="file"] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* --- Controls ------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  flex-wrap: wrap;
+}
+
+.btn {
+  font: inherit;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: var(--radius-sm);
+  padding: 12px 20px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  flex: 1;
+  min-width: 200px;
+  background: var(--accent);
+  color: var(--accent-contrast);
+}
+
+.btn--primary:not(:disabled):hover {
+  background: var(--brand-500);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border-strong);
+}
+
+.btn--ghost:not(:disabled):hover {
+  color: var(--text);
+  border-color: var(--accent);
+}
+
+.settings {
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.settings summary {
+  cursor: pointer;
+  width: fit-content;
+}
+
+.settings__body {
+  margin-top: 12px;
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+}
+
+.settings label {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.settings input {
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-muted);
+  color: var(--text);
+}
+
+.settings input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.settings small {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
+/* --- Status --------------------------------------------------------- */
+
+.status {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.status.is-visible {
+  display: flex;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  border-top-color: var(--accent);
+  animation: spin 0.8s linear infinite;
+  flex: none;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.alert {
+  display: none;
+  margin-top: 20px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid color-mix(in srgb, var(--danger) 35%, transparent);
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-size: 14px;
+}
+
+.alert.is-visible {
+  display: block;
+}
+
+.alert__meta {
+  display: block;
+  margin-top: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* --- Results -------------------------------------------------------- */
+
+.results {
+  display: none;
+}
+
+.results.is-visible {
+  display: block;
+}
+
+.results__head {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.results__head h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 650;
+}
+
+.results__meta {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-faint);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  background: var(--surface);
+  min-width: 0;
+}
+
+.card--wide {
+  grid-column: 1 / -1;
+}
+
+.card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+.card__title::before {
+  content: "";
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.fields {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fields--four {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.field {
+  min-width: 0;
+}
+
+.field__label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 5px;
+}
+
+.field__value {
+  font-size: 13px;
+  padding: 9px 12px;
+  border-radius: 6px;
+  background: var(--surface-muted);
+  border: 1px solid transparent;
+  min-height: 36px;
+  overflow-wrap: anywhere;
+}
+
+.field__value.is-empty {
+  background: transparent;
+  border: 1px dashed var(--border-strong);
+  color: var(--text-faint);
+  font-style: italic;
+}
+
+/* --- Footer --------------------------------------------------------- */
+
+.foot {
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--text-faint);
+  text-align: center;
+}
+
+.foot a {
+  color: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (max-width: 720px) {
+  .panel {
+    padding: 20px;
+  }
+
+  .cards,
+  .fields,
+  .fields--four {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .card--wide {
+    grid-column: auto;
+  }
+}

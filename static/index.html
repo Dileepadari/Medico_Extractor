@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Extract structured patient, insurance and referral data from medical referral documents." />
+  <meta name="robots" content="noindex, nofollow" />
+  <meta name="theme-color" content="#47266b" media="(prefers-color-scheme: light)" />
+  <meta name="theme-color" content="#100c17" media="(prefers-color-scheme: dark)" />
+  <title>Medico Extractor</title>
+  <link rel="icon" type="image/png" href="/static/favicon.png" />
+  <link rel="apple-touch-icon" href="/static/brand/logo-192.png" />
+  <link rel="stylesheet" href="/static/styles.css" />
+</head>
+<body>
+  <div class="shell">
+    <header class="masthead">
+      <span class="masthead__mark">
+        <img class="masthead__logo" src="/static/brand/logo.png" alt="" width="30" height="30" />
+      </span>
+      <div class="masthead__text">
+        <h1>Medico Extractor</h1>
+        <p>Structured data from medical referral documents</p>
+      </div>
+      <div class="masthead__spacer"></div>
+      <span class="badge" id="serviceBadge" data-state="unknown">Checking&hellip;</span>
+    </header>
+
+    <main>
+      <section class="panel">
+        <button type="button" class="dropzone" id="dropzone" aria-describedby="fileHint">
+          <span class="dropzone__icon" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </span>
+          <span class="dropzone__title">Drop a referral document here, or click to browse</span>
+          <span class="dropzone__hint" id="fileHint">PDF, JPEG, PNG or WebP &middot; up to 10&nbsp;MB</span>
+        </button>
+
+        <input type="file" id="fileInput" accept="application/pdf,image/jpeg,image/png,image/webp" />
+
+        <div class="actions">
+          <button type="button" class="btn btn--primary" id="extractBtn" disabled>Extract data</button>
+          <button type="button" class="btn btn--ghost" id="resetBtn" disabled>Clear</button>
+        </div>
+
+        <details class="settings" id="settings">
+          <summary>Advanced</summary>
+          <div class="settings__body">
+            <label for="apiKeyInput">API key (only if this deployment requires one)</label>
+            <input type="password" id="apiKeyInput" autocomplete="off" spellcheck="false"
+                   placeholder="X-API-Key" />
+            <small>Kept in this browser tab only, and cleared when the tab closes.</small>
+          </div>
+        </details>
+
+        <p class="status" id="status" role="status" aria-live="polite">
+          <span class="spinner" aria-hidden="true"></span>
+          <span id="statusText">Reading the document&hellip;</span>
+        </p>
+
+        <div class="alert" id="alert" role="alert">
+          <span id="alertText"></span>
+          <span class="alert__meta" id="alertMeta"></span>
+        </div>
+      </section>
+
+      <section class="panel results" id="results" aria-live="polite">
+        <div class="results__head">
+          <h2>Extracted results</h2>
+          <span class="results__meta" id="resultsMeta"></span>
+          <div class="masthead__spacer"></div>
+          <button type="button" class="btn btn--ghost" id="copyBtn">Copy JSON</button>
+          <button type="button" class="btn btn--ghost" id="downloadBtn">Download JSON</button>
+        </div>
+        <div class="cards" id="cards"></div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <p>
+        Documents are processed in memory and never stored.
+        Built by <a href="https://dileepadari.dev" rel="noopener">Dileep Adari</a>.
+      </p>
+    </footer>
+  </div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
