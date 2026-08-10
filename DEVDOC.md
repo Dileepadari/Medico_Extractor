@@ -97,7 +97,6 @@ static/                  The bundled UI (no build step)
 ├── favicon.png
 └── brand/logo.png       Brand mark, shared with dileepadari.dev
 
-api/index.py             Vercel entrypoint (re-exports app.main:app)
 tests/                   pytest suite - never touches the network
 ```
 
@@ -301,8 +300,24 @@ times the configured budget.
 
 ### Vercel
 
-`api/index.py` re-exports the ASGI app and `vercel.json` rewrites every path to
-it, so the UI, the docs and the API all come from one function.
+Vercel's Python runtime loads the ASGI app named by `tool.vercel.entrypoint` in
+`pyproject.toml` (`app.main:app`) and turns the whole FastAPI app into a single
+function, so the UI, the docs and the API all come from one place. No catch-all
+rewrite is needed - the app does its own routing.
+
+Two things that will silently break a deploy:
+
+* **Dependencies come from `pyproject.toml`, not `requirements.txt`.** Vercel
+  prefers the former when both exist. `[project].dependencies` and
+  `requirements.txt` must be kept in sync; if the pyproject list is missing or
+  stale, the build still succeeds and every request then fails with
+  `FUNCTION_INVOCATION_FAILED`, because the function starts without FastAPI
+  installed.
+* **`vercel.json`'s `functions` key must be the resolved entrypoint path**
+  (`app/main.py`). Keyed on anything else, the `maxDuration` below is ignored.
+
+Runtime tracebacks are not in the HTTP response - read them in the project's
+**Logs** tab, or with `vercel logs <deployment-url>`.
 
 ```bash
 vercel env add GOOGLE_API_KEY production

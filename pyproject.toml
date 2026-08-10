@@ -7,8 +7,30 @@ requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [{ name = "Dileep Adari" }]
 
+# Keep in sync with requirements.txt, which is what the Docker build installs.
+# Vercel resolves dependencies from this file in preference to requirements.txt:
+# if this list is missing or stale, the deployed function starts with those
+# packages absent and crashes on import.
+dependencies = [
+    "fastapi==0.135.2",
+    "uvicorn[standard]==0.42.0",
+    "python-multipart==0.0.22",
+    "pydantic==2.12.5",
+    "pydantic-settings==2.13.1",
+    "langchain-core==1.2.22",
+    "langchain-google-genai==4.2.1",
+    "python-dotenv==1.2.2",
+    "tenacity==9.1.4",
+]
+
 [tool.setuptools]
 packages = ["app"]
+
+# The ASGI app Vercel loads. Stated explicitly because `app/main.py` and the old
+# `api/index.py` were both auto-detectable entrypoints, and the choice between
+# them was left to the platform.
+[tool.vercel]
+entrypoint = "app.main:app"
 
 [tool.ruff]
 line-length = 100
